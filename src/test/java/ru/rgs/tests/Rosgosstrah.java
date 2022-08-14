@@ -9,15 +9,18 @@ import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.swing.*;
 import java.nio.file.WatchEvent;
 import java.util.concurrent.TimeUnit;
 
 public class Rosgosstrah {
-    WebDriver driver;
-    WebDriverWait wait;
+    private WebDriver driver;
+    private WebDriverWait wait;
+    private Actions actions;
 
     @Before
     public void before() {
@@ -25,23 +28,33 @@ public class Rosgosstrah {
         driver = new ChromeDriver();
         driver.manage().window().maximize();
 
-        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
         driver.manage().timeouts().setScriptTimeout(10, TimeUnit.SECONDS);
-        driver.manage().timeouts().pageLoadTimeout(30, TimeUnit.SECONDS);
+        driver.manage().timeouts().pageLoadTimeout(10, TimeUnit.SECONDS);
 
         wait = new WebDriverWait(driver, 10, 2000);
+
+        actions = new Actions(driver);
 
         driver.get("https://rgs.ru/");
     }
 
     @Test
     public void test(){
-        // Находим кнопку Компаниям и нажиамем на неё, проводим проверку перехода по тайтлу
+        //
+        final String cookiePath = "//div[@class='cookie block--cookie']";
+        if (elementIsExist(By.xpath(cookiePath))){
+            WebElement closeCookie = driver.findElement(By.xpath(cookiePath + "//button"));
+            closeCookie.click();
+        }
+
+        // Находим кнопку Компаниям и нажимаем на неё, проводим проверку перехода по тайтлу
         WebElement mainPage = driver.findElement(By.xpath("//a[text()='Компаниям' and contains(@class, 'text--second')]"));
         mainPage.click();
         wait.until(ExpectedConditions.titleIs("Страхование компаний и юридических лиц | Росгосстрах"));
 
-        // Находим кнопку Здоровье и нажиамем на неё и проверяем, что статус у этой кнопки поменялся на эктив и, соответственно, она раскрылась
+        // Находим кнопку Здоровье и нажимаем на неё и проверяем, что статус у этой кнопки поменялся на эктив и, соответственно, она раскрылась
+
         WebElement healthButton = driver.findElement(By.xpath("//span[text()='Здоровье' and contains(@class, 'padding')]"));
         healthButton.click();
         WebElement parentHealthButton = healthButton.findElement(By.xpath("./.."));
@@ -54,25 +67,23 @@ public class Rosgosstrah {
         WebElement medStrahH1 = driver.findElement(By.xpath("//h1[text()='Добровольное медицинское страхование' and contains(@class, 'word-breaking')]"));
         Assert.assertTrue("Страница не загрузилась", medStrahH1.isDisplayed());
 
-        driver.navigate().refresh();
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+
+        final String paramWidgetXPath = "//div[@class='widget']";
+        if (elementIsExist(By.xpath(paramWidgetXPath))){
+            WebElement closeWidget = driver.findElement(By.xpath(paramWidgetXPath + "//div[contains(@class, 'close js')]"));
+//            closeWidget.click();      Не работает потому что не кликабельный, нюансы с вебверсткой
+            actions.moveToElement(closeWidget).pause(200).click(closeWidget).build().perform();
+            // сначала выбери действия, которые хочешь выполнить, а когда выполняется build perform, он их начинает выполнять
+            // паузу выставляем, потому что наведение происходит какое-то время
         }
+
+
 
         // Нажимаю на кнопку Отправить заявку
         WebElement sendBid = driver.findElement(By.xpath("//span[text()='Отправить заявку']"));
-
-        // Где-то тут на сайте всплывает открывающаяся по времени реклама, которая не дает дальше кликать, поэтому стоит написать код для её закрытия
-//        By advertising = By.xpath("//div[contains(text(), '×') and contains(@data-fl-track, 'click-close-login')]");
-
-//        if (elementIsExist(advertising)) {
-//            WebElement region = driver.findElement(advertising);
-//            region.click();
-//        }
         sendBid.click();
+
         // После клика не успевает прокрутить экран и из-за этого падает, пока поставлю васянскую задержку слипом
         try {
             Thread.sleep(5000);
