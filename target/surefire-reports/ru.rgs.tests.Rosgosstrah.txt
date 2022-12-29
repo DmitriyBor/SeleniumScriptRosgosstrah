@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: ru.rgs.tests.Rosgosstrah
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 23.462 s - in ru.rgs.tests.Rosgosstrah
